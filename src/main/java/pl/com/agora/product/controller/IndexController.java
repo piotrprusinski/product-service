@@ -1,17 +1,19 @@
 package pl.com.agora.product.controller;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
+import pl.com.agora.api.payment.client.PaymentClient;
+import pl.com.agora.api.payment.client.PaymentResult;
 import pl.com.agora.product.model.Product;
 
 @RestController
@@ -35,13 +37,14 @@ public class IndexController {
 		return modelAndView;
 	}
 
+	@Autowired
+	private PaymentClient paymentClient;
+	
 	@RequestMapping("/payfor")
 	@ResponseBody
-	public String payfor(@RequestParam String id) {
-		RestTemplate restTemplate = new RestTemplate();
-		Map<String, String> vars = Collections.singletonMap("id", id);
-		String result = restTemplate.getForObject(
-				"http://localhost:8081/payfor?id={id}", String.class, vars);
+	public String payfor(@RequestParam String id) throws InterruptedException, ExecutionException {
+		Future<PaymentResult> paymentResultFuture = paymentClient.payFor(id);
+		final PaymentResult paymentResult = paymentResultFuture.get();
 		return id;
 	}
 
